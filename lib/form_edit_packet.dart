@@ -1,25 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:reservastion/screen/dashboard_screen.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:reservastion/paket.dart';
+import 'package:reservastion/root_page.dart';
+import 'package:reservastion/screen/admin_dashboard.dart';
 
-class EditPaketForm extends StatefulWidget {
+class FormEditPacket extends StatefulWidget {
   final Product product;
 
-  const EditPaketForm({super.key, required this.product});
+  const FormEditPacket({super.key, required this.product});
 
   @override
   // ignore: library_private_types_in_public_api
-  _EditPaketFormState createState() => _EditPaketFormState();
+  _FormEditPacketState createState() => _FormEditPacketState();
 }
 
-class _EditPaketFormState extends State<EditPaketForm> {
+class _FormEditPacketState extends State<FormEditPacket> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _namaController;
   late TextEditingController _hargaController;
-
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   @override
   void initState() {
@@ -36,26 +34,33 @@ class _EditPaketFormState extends State<EditPaketForm> {
     super.dispose();
   }
 
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      final updatedData = {
-        'nama': _namaController.text,
-        'harga': _hargaController.text,
-        'gambar': widget.product.imageUrl,
-      };
+  Future _submitForm() async {
+    try {
+      if (_formKey.currentState!.validate()) {
+        final updatedData = {
+          'Name': _namaController.text,
+          'Price': _hargaController.text,
+        };
 
-      await FirebaseFirestore.instance
-          .collection('products_packet')
-          .doc(widget.product.id)
-          .update(updatedData);
+        await FirebaseFirestore.instance
+            .collection('paket_makeup')
+            .doc(widget.product.id)
+            .update(updatedData);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Paket berhasil diperbarui'),
-        ),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Paket berhasil diperbarui'),
+          ),
+        );
 
-      Navigator.pop(context);
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const RootPage(),
+            ));
+      }
+    } catch (e) {
+      return Exception(e.toString());
     }
   }
 
@@ -98,9 +103,17 @@ class _EditPaketFormState extends State<EditPaketForm> {
               ),
               const SizedBox(height: 16.0),
               ElevatedButton(
-                onPressed: _submitForm,
-                child: const Text('Update Paket'),
-              ),
+                  onPressed: _submitForm,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Colors.black, // Warna latar belakang tombol
+                    foregroundColor: Colors.white, // Warna teks tombol
+                    minimumSize: const Size(288, 51), // Ukuran tombol
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0), // Bentuk tombol
+                    ),
+                  ),
+                  child: const Text('Update Paket')),
             ],
           ),
         ),

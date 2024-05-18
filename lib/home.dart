@@ -1,4 +1,3 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reservastion/profil.dart';
@@ -8,7 +7,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    var _user = FirebaseAuth.instance;
     return Scaffold(
       backgroundColor: Colors.grey[300],
       appBar: AppBar(

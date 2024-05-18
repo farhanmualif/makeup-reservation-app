@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:reservastion/detail_paket.dart';
 import 'package:reservastion/profil.dart'; // Tambahkan import untuk Firebase Auth
+// Tambahkan baris ini
 
 class PaketPage extends StatefulWidget {
   const PaketPage({super.key});
@@ -12,10 +14,8 @@ class PaketPage extends StatefulWidget {
 }
 
 class _PaketPageState extends State<PaketPage> {
-  final FirebaseFirestore _firestore =
-      FirebaseFirestore.instance; // Inisialisasi instance Cloud Firestore
-  final FirebaseAuth _auth =
-      FirebaseAuth.instance; // Inisialisasi instance Firebase Auth
+  final FirebaseFirestore _firestore = FirebaseFirestore
+      .instance; // Inisialisasi instance Cloud Firestore// Inisialisasi instance Firebase Auth
 
   @override
   void initState() {
@@ -46,9 +46,11 @@ class _PaketPageState extends State<PaketPage> {
               onTap: () {
                 // Navigasi ke halaman profil
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const ProfilPage()));
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfilPage(),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -98,60 +100,79 @@ class _PaketPageState extends State<PaketPage> {
                     child: CircularProgressIndicator(),
                   );
                 }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
+
                 final documents = snapshot.data!.docs;
-                return ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: documents.length,
-                  itemBuilder: (context, index) {
-                    final data =
-                        documents[index].data() as Map<String, dynamic>;
-                    return _buildPaketCard(
-                      data['nama'],
-                      data['harga'],
-                      data['gambar'],
-                    );
-                  },
+
+                return Container(
+                  margin: const EdgeInsets.only(left: 20, right: 20),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.8,
+                    ),
+                    itemCount: documents.length,
+                    itemBuilder: (context, index) {
+                      final documentId = documents[index].id;
+                      Map<String, dynamic> data =
+                          documents[index].data() as Map<String, dynamic>;
+                      String nama = data['Name'];
+                      String harga = data['Price'];
+                      String gambar = data['Image'];
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DetailPaket(paketId: documentId),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          child: Container(
+                            margin: const EdgeInsets.only(left: 10, right: 10),
+                            child: Column(
+                              children: [
+                                Image.network(
+                                  gambar,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(
+                                    nama,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Text(harga),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildPaketCard(String nama, String harga, String gambar) {
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(
-            child: Image.network(
-              gambar,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              nama,
-              style: const TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-            child: Text(
-              harga,
-              style: const TextStyle(
-                fontSize: 14.0,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
