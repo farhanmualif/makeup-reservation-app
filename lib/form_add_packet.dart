@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
+import 'package:intl/intl.dart';
 // ignore: depend_on_referenced_packages
 import 'package:path/path.dart' as path;
 
@@ -27,6 +28,11 @@ class _AddPaketFormState extends State<AddPaketForm> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool _isLoading = false;
 
+  String formatCurrency(num value) {
+    final formatter = NumberFormat.decimalPattern();
+    return formatter.format(value);
+  }
+
   Future<void> _selectImage() async {
     try {
       final image = await ImagePicker().pickImage(source: ImageSource.gallery);
@@ -34,7 +40,7 @@ class _AddPaketFormState extends State<AddPaketForm> {
       final imageTemp = File(image.path);
       setState(() => _imageFile = imageTemp);
     } on PlatformException catch (e) {
-      print('Failed to pick image: $e');
+      Exception('Failed to pick image: $e');
     }
     setState(() {
       _isLoading = false;
@@ -177,11 +183,23 @@ class _AddPaketFormState extends State<AddPaketForm> {
                   decoration: const InputDecoration(
                     labelText: 'Harga',
                   ),
+                  keyboardType: TextInputType
+                      .number, // Mengatur tipe keyboard menjadi numerik
+                  inputFormatters: [
+                    FilteringTextInputFormatter
+                        .digitsOnly, // Hanya menerima input numerik
+                  ],
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Harga tidak boleh kosong';
                     }
                     return null;
+                  },
+                  onChanged: (value) {
+                    _hargaController.text =
+                        formatCurrency(int.parse(value.replaceAll(',', '')));
+                    _hargaController.selection = TextSelection.collapsed(
+                        offset: _hargaController.text.length);
                   },
                 ),
                 const SizedBox(height: 16),
@@ -202,7 +220,6 @@ class _AddPaketFormState extends State<AddPaketForm> {
                 Center(
                   child: ElevatedButton(
                     onPressed: () {
-                      print("clicked");
                       _submitForm();
                     },
                     style: ElevatedButton.styleFrom(

@@ -1,11 +1,11 @@
-import 'dart:math';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:reservastion/ThankyouPage.dart';
+import 'package:reservastion/paket.dart';
 import 'package:reservastion/services/token_services.dart';
 import 'package:uuid/uuid.dart';
 
@@ -27,7 +27,7 @@ class CheckoutPage extends StatefulWidget {
   CheckoutPage({super.key, required this.idPaket, required this.price});
 
   String? idPaket;
-  int? price;
+  double? price;
 
   @override
   State<CheckoutPage> createState() => _CheckoutPageState();
@@ -68,20 +68,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
     _midtrans?.setUIKitCustomSetting(
       skipCustomerDetailsPages: true,
     );
-    _midtrans!.setTransactionFinishedCallback((result) {
-      Navigator.pushReplacementNamed(context, "/success");
+    _midtrans!.setTransactionFinishedCallback((result) async {
+      var response = await _saveOrder();
+      if (response.status == true) {
+        Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ThankYouPage(),
+            ));
+      } else {
+        _showToast("gagal melakukan order", true);
+      }
     });
   }
 
-  void _showToast(String msg, bool isError) {
+  void _showToast(String message, bool isError) {
     Fluttertoast.showToast(
-        msg: msg,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: isError ? Colors.red : Colors.green,
-        textColor: Colors.white,
-        fontSize: 16.0);
+      msg: message,
+      toastLength: Toast.LENGTH_LONG,
+      timeInSecForIosWeb: 1,
+      backgroundColor: isError ? Colors.red : Colors.green,
+      textColor: Colors.white,
+      fontSize: 16.0,
+    );
   }
 
   @override
@@ -135,7 +144,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
     if (_selectedDate != null &&
         _selectedTime != null &&
         _addressController.text.isNotEmpty) {
-      var response = await FirebaseFirestore.instance.collection('order').add({
+      // add custome order id
+      var response =
+          FirebaseFirestore.instance.collection('order').doc(orderId);
+      await response.set({
         'UserUid': userUid,
         'PacketId': widget.idPaket,
         "TotalPrice": widget.price,
@@ -154,6 +166,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
       return ResponsePutData(
           msg: "berhasil insert data", data: "", status: true);
     }
+  }
+
+  String formatCurrency(num value) {
+    final formatter = NumberFormat.decimalPattern();
+    return formatter.format(value);
   }
 
   @override
@@ -212,37 +229,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
             Center(
               child: ElevatedButton(
                 onPressed: () async {
+                  var uid = const Uuid();
+                  setState(() {
+                    orderId = uid.v4();
+                  });
                   try {
-                    var response = await _saveOrder();
-                    if (response.status == true) {
-                      if (response.data != null) {
-                        final result = await TokenServices().getToken(
-                          orderId: response.data,
-                          idPacket: widget.idPaket.toString(),
-                          price: widget.price!,
+                    final result = await TokenServices().getToken(
+                      orderId: orderId!,
+                      idPacket: widget.idPaket.toString(),
+                      price: widget.price!,
+                    );
+
+                    if (result.isRight()) {
+                      String? token = result.fold((l) => null, (r) => r.token);
+
+                      if (token != null) {
+                        _midtrans?.startPaymentUiFlow(
+                          token: token,
                         );
-
-                        if (result.isRight()) {
-                          String? token =
-                              result.fold((l) => null, (r) => r.token);
-
-                          if (token != null) {
-                            _midtrans?.startPaymentUiFlow(
-                              token: token,
-                            );
-                          } else {
-                            _showToast('Token cannot be null', true);
-                          }
-                        } else {
-                          _showToast('Transaction Failed', true);
-                        }
                       } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Please fill in all fields'),
-                          ),
-                        );
+                        _showToast('Token cannot be null', true);
                       }
+                    } else {
+                      _showToast('Transaction Failed', true);
                     }
                   } catch (e) {
                     rethrow;

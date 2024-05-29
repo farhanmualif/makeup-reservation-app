@@ -13,8 +13,10 @@ class SignUpPage extends StatefulWidget {
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _fullnameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -22,7 +24,8 @@ class _SignUpPageState extends State<SignUpPage> {
 
   var rool = "user";
 
-  void signUp(String email, String password, String rool) async {
+  void signUp(String email, String password, String rool, String fullname,
+      String phone) async {
     const CircularProgressIndicator();
     if (_formKey.currentState!.validate()) {
       try {
@@ -30,9 +33,9 @@ class _SignUpPageState extends State<SignUpPage> {
             .createUserWithEmailAndPassword(email: email, password: password);
         User? user = userCredential.user;
         // Menyimpan nama pengguna
-        await user?.updateDisplayName(_nameController.text);
+        await user?.updateDisplayName(_usernameController.text);
 
-        postDetailsToFirestore(email, rool);
+        postDetailsToFirestore(email, rool, fullname, phone);
 
         Navigator.pushReplacement(
           // ignore: use_build_context_synchronously
@@ -52,182 +55,253 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  postDetailsToFirestore(String email, String rool) async {
-    FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
+  postDetailsToFirestore(
+      String email, String rool, String fullname, String phone) async {
     var user = _auth.currentUser;
     CollectionReference ref = FirebaseFirestore.instance.collection('users');
-    ref.doc(user!.uid).set({'email': _emailController.text, 'rool': rool});
+    ref.doc(user!.uid).set({
+      'email': _emailController.text,
+      'rool': rool,
+      'fullname': fullname,
+      'phone': phone,
+    });
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => const LoginScreen()));
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      resizeToAvoidBottomInset: true, // Add this line
       backgroundColor: Colors.grey[300],
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.lock,
-              size: 64.0,
-              color: Colors.grey[600],
-            ),
-            const SizedBox(height: 16.0),
-            const Text(
-              'Let\'s create an account for you',
-              style: TextStyle(fontSize: 18.0),
-            ),
-            const SizedBox(height: 24.0),
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  TextFormField(
-                    controller: _nameController,
-                    decoration: InputDecoration(
-                      hintText: 'Username',
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[400]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[600]!),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Please enter your username';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(
-                      height: 16.0), // Spasi antara username dan email
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      hintText: 'Email',
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[400]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[600]!),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Please enter your phone or email';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'Password',
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[400]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[600]!),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'Confirm password',
-                      hintStyle: TextStyle(color: Colors.grey[600]),
-                      filled: true,
-                      fillColor: Colors.white,
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[400]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide(color: Colors.grey[600]!),
-                      ),
-                    ),
-                    validator: (value) {
-                      if (value!.isEmpty) {
-                        return 'Please confirm your password';
-                      }
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
+      body: SingleChildScrollView(
+        // Wrap the form with SingleChildScrollView
+        child: Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: screenWidth * 0.05,
+            vertical: screenHeight * 0.05,
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.lock,
+                size: screenWidth * 0.15,
+                color: Colors.grey[600],
               ),
-            ),
-            const SizedBox(height: 24.0),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    // Perform sign up logic here
-                    signUp(
-                        _emailController.text, _passwordController.text, rool);
-                  }
+              SizedBox(height: screenHeight * 0.02),
+              Text(
+                'Let\'s create an account for you',
+                style: TextStyle(fontSize: screenWidth * 0.05),
+              ),
+              SizedBox(height: screenHeight * 0.03),
+              Form(
+                // Move the Form inside the SingleChildScrollView
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        hintText: 'Username',
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[400]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[600]!),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter your username';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    TextFormField(
+                      controller: _fullnameController,
+                      decoration: InputDecoration(
+                        hintText: 'Full Name',
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[400]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[600]!),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter your Fullname';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    TextFormField(
+                      controller: _phoneController,
+                      decoration: InputDecoration(
+                        hintText: 'Number Phone',
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[400]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[600]!),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter your Phone';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        hintText: 'Email',
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[400]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[600]!),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter your phone or email';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    TextFormField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[400]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[600]!),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please enter a password';
+                        }
+                        return null;
+                      },
+                    ),
+                    SizedBox(height: screenHeight * 0.02),
+                    TextFormField(
+                      controller: _confirmPasswordController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        hintText: 'Confirm password',
+                        hintStyle: TextStyle(color: Colors.grey[600]),
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[400]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(color: Colors.grey[600]!),
+                        ),
+                      ),
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return 'Please confirm your password';
+                        }
+                        if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.03),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      // Perform sign up logic here
+                      signUp(
+                          _emailController.text,
+                          _passwordController.text,
+                          rool,
+                          _fullnameController.text,
+                          _phoneController.text);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    padding:
+                        EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  child: Text(
+                    'Sign Up',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: screenWidth * 0.045,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(height: screenHeight * 0.02),
+              TextButton(
+                onPressed: () {
+                  // Navigasi ke halaman Login
+                  Navigator.pushNamed(context, '/login');
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0),
+                child: Text(
+                  'Already an account? Login',
+                  style: TextStyle(
+                    color: Colors.blue,
+                    fontSize: screenWidth * 0.04,
                   ),
                 ),
-                child: const Text(
-                  'Sign Up',
-                  style: TextStyle(color: Colors.white),
-                ),
               ),
-            ),
-            const SizedBox(height: 16.0),
-            TextButton(
-              onPressed: () {
-                // Navigasi ke halaman Login
-                Navigator.pushNamed(context, '/login');
-              },
-              child: const Text(
-                'Already an account? Login',
-                style: TextStyle(
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

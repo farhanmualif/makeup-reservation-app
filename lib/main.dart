@@ -1,6 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:reservastion/ThankyouPage.dart';
+import 'package:reservastion/order_history.dart';
+import 'package:reservastion/order_in.dart';
 import 'package:reservastion/root_page.dart';
 import 'package:reservastion/screen/admin_dashboard.dart';
 import 'signup.dart';
@@ -20,10 +22,12 @@ void main() async {
     ),
   );
 
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -38,8 +42,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/admin-dashboard': (context) => const AdminDashboard(),
         '/success': (context) => const ThankYouPage(),
-
-        /// Rute untuk halaman PaketPage
+        '/order-history': (context) => OrderHistory(),
+        '/order-in': (context) => const OrderIn(),
       },
     );
   }

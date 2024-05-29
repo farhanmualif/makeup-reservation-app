@@ -37,7 +37,7 @@ class ThankYouPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Produk akan segera kami proses.',
+              'Pemesanan jasa makeup sudah tercatat.',
               style: TextStyle(
                 fontSize: 16,
               ),
@@ -48,6 +48,14 @@ class ThankYouPage extends StatelessWidget {
                 // Navigasi ke halaman home atau dashboard
                 Navigator.of(context).pushReplacementNamed('/');
               },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black, // Warna latar belakang tombol
+                foregroundColor: Colors.white, // Warna teks tombol
+                minimumSize: const Size(288, 51), // Ukuran tombol
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0), // Bentuk tombol
+                ),
+              ),
               child: const Text('Kembali ke Beranda'),
             ),
           ],

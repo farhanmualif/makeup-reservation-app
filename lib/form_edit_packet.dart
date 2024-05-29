@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:reservastion/paket.dart';
 import 'package:reservastion/root_page.dart';
 import 'package:reservastion/screen/admin_dashboard.dart';
 
@@ -18,11 +17,14 @@ class _FormEditPacketState extends State<FormEditPacket> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _namaController;
   late TextEditingController _hargaController;
+  late TextEditingController _deskripsiController;
 
   @override
   void initState() {
     super.initState();
     _namaController = TextEditingController(text: widget.product.name);
+    _deskripsiController =
+        TextEditingController(text: widget.product.deskripsi);
     _hargaController =
         TextEditingController(text: widget.product.price.toString());
   }
@@ -31,6 +33,7 @@ class _FormEditPacketState extends State<FormEditPacket> {
   void dispose() {
     _namaController.dispose();
     _hargaController.dispose();
+    _deskripsiController.dispose();
     super.dispose();
   }
 
@@ -40,6 +43,7 @@ class _FormEditPacketState extends State<FormEditPacket> {
         final updatedData = {
           'Name': _namaController.text,
           'Price': _hargaController.text,
+          'Description': _deskripsiController.text
         };
 
         await FirebaseFirestore.instance
@@ -92,7 +96,20 @@ class _FormEditPacketState extends State<FormEditPacket> {
               TextFormField(
                 controller: _hargaController,
                 decoration: const InputDecoration(
-                  labelText: 'Harga',
+                  labelText: 'Harga Paket',
+                ),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Harga Paket tidak boleh kosong';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
+              TextFormField(
+                controller: _deskripsiController,
+                decoration: const InputDecoration(
+                  labelText: 'Deskripsi',
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {

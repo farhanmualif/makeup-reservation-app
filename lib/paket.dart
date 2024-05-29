@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reservastion/detail_paket.dart';
+import 'package:reservastion/order_history.dart';
 import 'package:reservastion/profil.dart'; // Tambahkan import untuk Firebase Auth
 // Tambahkan baris ini
 
@@ -48,7 +49,7 @@ class _PaketPageState extends State<PaketPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ProfilPage(),
+                    builder: (context) => const ProfilePage(),
                   ),
                 );
               },
@@ -56,7 +57,8 @@ class _PaketPageState extends State<PaketPage> {
             ListTile(
               title: const Text('Histori Pemesanan'),
               onTap: () {
-                // Navigasi ke halaman histori pemesanan
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => OrderHistory()));
               },
             ),
             ListTile(
@@ -139,6 +141,7 @@ class _PaketPageState extends State<PaketPage> {
                           );
                         },
                         child: Card(
+                          color: Colors.grey[300],
                           child: Container(
                             margin: const EdgeInsets.only(left: 10, right: 10),
                             child: Column(
@@ -159,7 +162,7 @@ class _PaketPageState extends State<PaketPage> {
                                 ),
                                 Padding(
                                   padding: const EdgeInsets.all(8.0),
-                                  child: Text(harga),
+                                  child: Text("IDR. $harga"),
                                 ),
                               ],
                             ),

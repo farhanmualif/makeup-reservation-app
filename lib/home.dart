@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:reservastion/order_history.dart';
 import 'package:reservastion/profil.dart';
 
 class HomePage extends StatelessWidget {
@@ -31,13 +32,14 @@ class HomePage extends StatelessWidget {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const ProfilPage()));
+                        builder: (context) => const ProfilePage()));
               },
             ),
             ListTile(
               title: const Text('Histori Pemesanan'),
               onTap: () {
-                // Navigasi ke halaman histori pemesanan
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => OrderHistory()));
               },
             ),
             ListTile(
@@ -58,8 +60,8 @@ class HomePage extends StatelessWidget {
               child: Text(
                 'Home',
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16.0,
+                  color: Colors.grey,
                 ),
               ),
             ),
@@ -72,8 +74,25 @@ class HomePage extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.all(16.0),
               child: Text(
-                'Selamat datang di Tanti MakeUp Studio,\n\nBerdiri Sejak Tahun 2016, MUA Kami Telah Memiliki Banyak Pengalaman Dalam Bidang Merias Wajah Jadi Jangan Khawatir, Terdapat Beberapa Pilihan Jasa MakeUp Dari Kami.',
+                'Selamat datang di Tanti MakeUp Studio,',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
+              ),
+            ),
+            // const SizedBox(
+            //   height: 1,
+            // ),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Berdiri Sejak Tahun 2016, MUA Kami Telah Memiliki Banyak Pengalaman Dalam Bidang Merias Wajah Jadi Jangan Khawatir, Terdapat Beberapa Pilihan Jasa MakeUp Dari Kami.',
                 style: TextStyle(fontSize: 16.0),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Yuuukkk, Pilih Paket MakeUp!!',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0),
               ),
             ),
             Padding(
@@ -84,8 +103,12 @@ class HomePage extends StatelessWidget {
                   Navigator.pushNamed(context, '/paket');
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  textStyle: const TextStyle(fontSize: 12),
+                  backgroundColor: Colors.black, // Warna latar belakang tombol
+                  foregroundColor: Colors.white, // Warna teks tombol
+                  minimumSize: const Size(100, 51), // Ukuran tombol
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0), // Bentuk tombol
+                  ),
                 ),
                 child: const Text(
                   'PILIH PAKET',

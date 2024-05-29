@@ -76,9 +76,9 @@ class _DetailPaketState extends State<DetailPaket> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Konfirmasi Hapus'),
-          content: SingleChildScrollView(
+          content: const SingleChildScrollView(
             child: ListBody(
-              children: const <Widget>[
+              children: <Widget>[
                 Text('Apakah Anda yakin ingin menghapus paket ini?'),
               ],
             ),
@@ -94,7 +94,7 @@ class _DetailPaketState extends State<DetailPaket> {
               child: const Text('Hapus'),
               onPressed: () {
                 _deleteProduct();
-                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/paket');
               },
             ),
           ],
@@ -119,8 +119,11 @@ class _DetailPaketState extends State<DetailPaket> {
   Widget build(BuildContext context) {
     if (_paketSnapshot == null) {
       return Scaffold(
+        backgroundColor: Colors.grey[300],
         appBar: AppBar(
           title: const Text('TANTI MAKEUP STUDIO'),
+          backgroundColor: Colors.grey[300],
+          elevation: 0.5,
         ),
         body: const Center(
           child: CircularProgressIndicator(),
@@ -135,9 +138,14 @@ class _DetailPaketState extends State<DetailPaket> {
     final deskripsi = _paketSnapshot!.get('Description');
 
     Product prod = Product(
-        id: id, name: namapaket, price: double.parse(harga), imageUrl: gambar);
+        id: id,
+        name: namapaket,
+        price: double.tryParse(harga) ?? 0.0,
+        deskripsi: deskripsi, // Menggunakan 0.0 jika harga tidak valid
+        imageUrl: gambar);
 
     return Scaffold(
+      backgroundColor: Colors.grey[300],
       appBar: AppBar(
         title: const Text('TANTI MAKEUP STUDIO'),
       ),
@@ -187,84 +195,94 @@ class _DetailPaketState extends State<DetailPaket> {
                 const SizedBox(height: 16.0),
                 const SizedBox(height: 8.0),
                 const SizedBox(height: 16.0),
-                checkRoleUser() == "user"
-                    ? Center(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final idpaket = _paketSnapshot!.id;
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => CheckoutPage(
-                                          idPaket: idpaket,
-                                          price: int.parse(harga),
-                                        )));
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.black, // Warna latar belakang tombol
-                            foregroundColor: Colors.white, // Warna teks tombol
-                            minimumSize: const Size(288, 51), // Ukuran tombol
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(8.0), // Bentuk tombol
-                            ),
-                          ),
-                          child: const Text('PILIH'),
-                        ),
-                      )
-                    : Column(
-                        children: [
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: () {
-                                final idpaket = _paketSnapshot!.id;
-
-                                Navigator.push(
+                FutureBuilder<String>(
+                  future: checkRoleUser(),
+                  builder:
+                      (BuildContext context, AsyncSnapshot<String> snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else {
+                      final role = snapshot.data!;
+                      return role == 'user'
+                          ? Center(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  final idpaket = _paketSnapshot!.id;
+                                  Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                        builder: (context) => FormEditPacket(
-                                              product: prod,
-                                            )));
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Colors.black, // Warna latar belakang tombol
-                                foregroundColor:
-                                    Colors.white, // Warna teks tombol
-                                minimumSize:
-                                    const Size(288, 51), // Ukuran tombol
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      8.0), // Bentuk tombol
+                                      builder: (context) {
+                                        return CheckoutPage(
+                                          idPaket: idpaket,
+                                          price: double.parse(
+                                              harga.replaceAll(',', '')),
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(288, 51),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8.0),
+                                  ),
                                 ),
+                                child: const Text('PILIH'),
                               ),
-                              child: const Text('UPDATE'),
-                            ),
-                          ),
-                          const SizedBox(
-                            height: 20,
-                          ),
-                          Center(
-                            child: ElevatedButton(
-                              onPressed: _showDeleteConfirmationDialog,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    Colors.red, // Warna latar belakang tombol
-                                foregroundColor:
-                                    Colors.white, // Warna teks tombol
-                                minimumSize:
-                                    const Size(288, 51), // Ukuran tombol
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                      8.0), // Bentuk tombol
+                            )
+                          : Column(
+                              children: [
+                                Center(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => FormEditPacket(
+                                            product: prod,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      minimumSize: const Size(288, 51),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                    ),
+                                    child: const Text('UPDATE'),
+                                  ),
                                 ),
-                              ),
-                              child: const Text('DELETE'),
-                            ),
-                          )
-                        ],
-                      ),
+                                const SizedBox(
+                                  height: 20,
+                                ),
+                                Center(
+                                  child: ElevatedButton(
+                                    onPressed: _showDeleteConfirmationDialog,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      foregroundColor: Colors.white,
+                                      minimumSize: const Size(288, 51),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                    ),
+                                    child: const Text('DELETE'),
+                                  ),
+                                )
+                              ],
+                            );
+                    }
+                  },
+                ),
               ],
             ),
           ),

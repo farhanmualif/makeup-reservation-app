@@ -11,11 +11,11 @@ class TokenServices {
   Future getToken(
       {required String orderId,
       required String idPacket,
-      required int price}) async {
+      required double price}) async {
     try {
       var response = await http.post(
           Uri.parse(
-            "http://192.168.1.27:3000/api",
+            "http://192.168.1.22:3000/api",
           ),
           headers: <String, String>{
             "Content-Type": "application/json",
