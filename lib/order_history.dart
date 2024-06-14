@@ -9,7 +9,7 @@ class OrderHistory extends StatefulWidget {
 }
 
 class _OrderHistoryState extends State<OrderHistory> {
-  final CollectionReference historiPemesanan =
+  final CollectionReference orderHistory =
       FirebaseFirestore.instance.collection('order');
 
   final CollectionReference users =
@@ -42,7 +42,7 @@ class _OrderHistoryState extends State<OrderHistory> {
         title: const Text('History Pemesanan'),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: historiPemesanan.snapshots(),
+        stream: orderHistory.snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Text('Error: ${snapshot.error}');
@@ -51,6 +51,9 @@ class _OrderHistoryState extends State<OrderHistory> {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
+
+          String defaultImage =
+              "https://img.freepik.com/premium-vector/default-image-icon-vector-missing-picture-page-website-design-mobile-app-no-photo-available_87543-11093.jpg?w=1060";
 
           final pemesanan = snapshot.data!.docs;
           return Center(
@@ -101,7 +104,7 @@ class _OrderHistoryState extends State<OrderHistory> {
                                           'Deskripsi : ${dataPacket['Description'] ?? ''}'),
                                       const SizedBox(height: 8.0),
                                       Image.network(
-                                        dataPacket['Image'],
+                                        dataPacket['Image'] ?? defaultImage,
                                         width: 200,
                                         height: 200,
                                         fit: BoxFit.contain,
