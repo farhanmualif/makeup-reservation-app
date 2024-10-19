@@ -15,7 +15,7 @@ class TokenServices {
     try {
       var response = await http.post(
           Uri.parse(
-            "http://192.168.1.22:3000/api",
+            "http://192.168.145.154:3000/api",
           ),
           headers: <String, String>{
             "Content-Type": "application/json",
