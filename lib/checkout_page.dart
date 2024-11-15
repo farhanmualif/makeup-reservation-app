@@ -2,16 +2,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'package:midtrans_sdk/midtrans_sdk.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:reservastion/ThankyouPage.dart';
-import 'package:reservastion/paket.dart';
+import 'package:reservastion/pending_screen.dart';
+import 'package:reservastion/services/midtrans_services.dart';
 import 'package:reservastion/services/token_services.dart';
 import 'package:uuid/uuid.dart';
 
 class ResponsePutData {
   String msg;
-
   String data;
   bool status;
 
@@ -40,12 +39,14 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   var uuid = const Uuid();
   bool paymentSuccess = false;
+  bool _isLoading = false;
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
-  MidtransSDK? _midtrans;
   final String userUid = FirebaseAuth.instance.currentUser!.uid;
   String? orderId;
+  String? _paymentOption;
+  final MidtransService midtransService = MidtransService();
 
   @override
   void initState() {
@@ -54,30 +55,70 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void _initSDK() async {
-    _midtrans = await MidtransSDK.init(
-      config: MidtransConfig(
-        clientKey: "SB-Mid-client--_ZWw6ZvPAYWy51Y",
-        merchantBaseUrl: "",
-        colorTheme: ColorTheme(
-          colorPrimary: Colors.blue,
-          colorPrimaryDark: Colors.blue,
-          colorSecondary: Colors.blue,
-        ),
-      ),
-    );
-    _midtrans?.setUIKitCustomSetting(
-      skipCustomerDetailsPages: true,
-    );
-    _midtrans!.setTransactionFinishedCallback((result) async {
-      var response = await _saveOrder();
-      if (response.status == true) {
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const ThankYouPage(),
-            ));
-      } else {
-        _showToast("gagal melakukan order", true);
+    await midtransService.initSDK(); // Initialize MidtransService
+    midtransService.setTransactionFinishedCallback((result) async {
+      debugPrint("Transaction Result: ${result.toJson()}");
+      try {
+        // Handle cancelled transaction
+        if (result.isTransactionCanceled) {
+          _showToast("Transaksi dibatalkan", false);
+          Navigator.of(context).pop();
+          return;
+        }
+
+        // Check payment status using the order ID
+        final paymentStatusResponse =
+            await midtransService.checkPaymentStatus(orderId!);
+
+        await _saveOrder(
+            result.transactionId!, paymentStatusResponse?['status']);
+
+        if (paymentStatusResponse != null &&
+            paymentStatusResponse['status'] == 'success') {
+          final transactionData = paymentStatusResponse['data'];
+          final transactionStatus = transactionData['transaction_status'];
+
+          // Handle different transaction statuses
+          if (transactionStatus == 'settlement' ||
+              transactionStatus == 'capture') {
+            _showToast("Pembayaran berhasil", false);
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ThankYouPage(),
+                ),
+              );
+            }
+          } else if (transactionStatus == 'pending') {
+            _showToast("Pembayaran sedang diproses", false);
+            if (mounted) {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => PendingScreen(
+                    orderId: orderId!,
+                    paymentStatus: transactionStatus,
+                    paymentDetails: result.toJson(),
+                  ),
+                ),
+              );
+            }
+          } else {
+            _showToast(
+                "Status pembayaran: ${transactionData['status_message']}",
+                true);
+            Navigator.of(context).pop();
+          }
+        } else {
+          _showToast("Gagal memeriksa status pembayaran", true);
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        debugPrint("Error in transaction callback: $e");
+        _showToast("Terjadi kesalahan: ${e.toString()}", true);
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
       }
     });
   }
@@ -95,7 +136,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   @override
   void dispose() {
-    _midtrans?.removeTransactionFinishedCallback();
+    midtransService.removeTransactionFinishedCallback();
     super.dispose();
   }
 
@@ -107,15 +148,12 @@ class _CheckoutPageState extends State<CheckoutPage> {
       lastDate: DateTime(2100),
     );
     if (picked != null && picked != _selectedDate) {
-      // Periksa apakah tanggal yang dipilih sudah ada di database
       final String formattedDate = DateFormat('yyyy-MM-dd').format(picked);
-
       QuerySnapshot snapshot = await FirebaseFirestore.instance
           .collection('order')
           .where('Date', isEqualTo: "${formattedDate}T00:00:00.000")
           .get();
       if (snapshot.docs.isNotEmpty) {
-        // Tanggal sudah ada di database, tampilkan pesan error
         _showToast('Tanggal Sudah di booking, cari tanggal yang lain', true);
       } else {
         setState(() {
@@ -140,31 +178,42 @@ class _CheckoutPageState extends State<CheckoutPage> {
     }
   }
 
-  Future<ResponsePutData> _saveOrder() async {
+  Future<ResponsePutData> _saveOrder(
+      String midtransId, String paymentStatus) async {
     if (_selectedDate != null &&
         _selectedTime != null &&
-        _addressController.text.isNotEmpty) {
-      // add custome order id
-      var response =
-          FirebaseFirestore.instance.collection('order').doc(orderId);
-      await response.set({
+        _addressController.text.isNotEmpty &&
+        _paymentOption != null) {
+      double paidAmount =
+          _paymentOption == 'full' ? widget.price! : widget.price! / 2;
+      bool paidOff = _paymentOption == 'full';
+
+      var order = FirebaseFirestore.instance.collection('order').doc(orderId);
+      await order.set({
         'UserUid': userUid,
+        'MidtransId': midtransId,
+        'OrderId': orderId,
         'PacketId': widget.idPaket,
         "TotalPrice": widget.price,
+        'PaidAmount': paidAmount,
+        'PaymentStatus': paymentStatus,
+        'Status': 'PENDING',
+        'PaymentOption': _paymentOption,
+        'PaidOff': paidOff,
         'Date': _selectedDate!.toIso8601String(),
         'Time':
             '${_selectedTime!.hour}:${_selectedTime!.minute.toString().padLeft(2, '0')}',
         'Address': _addressController.text,
+        'CreatedAt': FieldValue.serverTimestamp(),
       });
 
-      // Navigasi ke halaman lain setelah berhasil menyimpan order
       return ResponsePutData(
-          msg: "berhasil insert data", data: response.id, status: true);
+          msg: "berhasil insert data", data: order.id, status: true);
     } else {
-      // Tampilkan pesan error jika ada field yang belum diisi
-
       return ResponsePutData(
-          msg: "berhasil insert data", data: "", status: true);
+          msg: "Gagal insert data. Pastikan semua field terisi.",
+          data: "",
+          status: false);
     }
   }
 
@@ -218,6 +267,29 @@ class _CheckoutPageState extends State<CheckoutPage> {
               ),
             ),
             const SizedBox(height: 16.0),
+            DropdownButtonFormField<String>(
+              value: _paymentOption,
+              hint: const Text('Pilih Mode Pembayaran'),
+              items: [
+                DropdownMenuItem(
+                  value: 'full',
+                  child: Text('Bayar Penuh'),
+                ),
+                DropdownMenuItem(
+                  value: 'half',
+                  child: Text('Bayar Setengah'),
+                ),
+              ],
+              onChanged: (value) {
+                setState(() {
+                  _paymentOption = value;
+                });
+              },
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16.0),
             TextField(
               controller: _addressController,
               decoration: const InputDecoration(
@@ -234,19 +306,26 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     orderId = uid.v4();
                   });
                   try {
+                    setState(() {
+                      _isLoading = true;
+                    });
+                    double amountToPay = widget.price!;
+
+                    if (_paymentOption == 'half') {
+                      amountToPay /= 2;
+                    }
+
                     final result = await TokenServices().getToken(
                       orderId: orderId!,
                       idPacket: widget.idPaket.toString(),
-                      price: widget.price!,
+                      price: amountToPay,
                     );
 
                     if (result.isRight()) {
                       String? token = result.fold((l) => null, (r) => r.token);
 
                       if (token != null) {
-                        _midtrans?.startPaymentUiFlow(
-                          token: token,
-                        );
+                        midtransService.startPaymentUiFlow(token);
                       } else {
                         _showToast('Token cannot be null', true);
                       }
@@ -255,17 +334,23 @@ class _CheckoutPageState extends State<CheckoutPage> {
                     }
                   } catch (e) {
                     rethrow;
+                  } finally {
+                    setState(() {
+                      _isLoading = false;
+                    });
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black, // Warna latar belakang tombol
-                  foregroundColor: Colors.white, // Warna teks tombol
-                  minimumSize: const Size(288, 51), // Ukuran tombol
+                  backgroundColor: Colors.black,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(288, 51),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0), // Bentuk tombol
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
-                child: const Text('LAKUKAN PEMBAYARAN'),
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator())
+                    : const Text('LAKUKAN PEMBAYARAN'),
               ),
             ),
           ],

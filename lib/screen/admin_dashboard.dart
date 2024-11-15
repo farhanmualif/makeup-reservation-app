@@ -3,18 +3,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:reservastion/detail_paket.dart';
 import 'package:reservastion/form_add_packet.dart';
+import 'package:reservastion/utils/utils.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _AdminDashboardState createState() => _AdminDashboardState();
 }
 
 class _AdminDashboardState extends State<AdminDashboard> {
-  final FirebaseFirestore _firestore = FirebaseFirestore
-      .instance; // Inisialisasi instance Cloud Firestore// Inisialisasi instance Firebase Auth
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -53,11 +52,59 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
               child: Text('Menu'),
             ),
-            ListTile(
-              title: const Text('Pesanan Masuk'),
-              onTap: () {
-                Navigator.pushNamed(context, '/order-in');
-              },
+            Stack(
+              children: [
+                ListTile(
+                  title: const Text('Pesanan Masuk'),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/order-in');
+                  },
+                ),
+                // Ganti bagian Positioned widget dengan StreamBuilder berikut
+                Positioned(
+                  right: 16.0,
+                  top: 12.0,
+                  child: StreamBuilder<QuerySnapshot>(
+                    stream: _firestore
+                        .collection('order')
+                        .where('Status', isEqualTo: 'PENDING')
+                        .snapshots(),
+                    builder: (context, snapshot) {
+                      if (!snapshot.hasData) {
+                        return Container();
+                      }
+
+                      int pendingCount = snapshot.data!.docs.length;
+
+                      // Hanya tampilkan jika ada pesanan pending
+                      if (pendingCount == 0) {
+                        return Container();
+                      }
+
+                      return Container(
+                        padding: const EdgeInsets.all(4.0),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          pendingCount.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
             ListTile(
               title: const Text('Logout'),
@@ -85,9 +132,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
             const Padding(
               padding: EdgeInsets.all(16.0),
               child: Text(
-                'Paket MakeUp',
+                'PAKET MAKEUP',
                 style: TextStyle(
-                  fontSize: 24.0,
+                  fontSize: 16.0,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -111,22 +158,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
                 return Container(
                   margin: const EdgeInsets.only(left: 20, right: 20),
-                  child: GridView.builder(
+                  child: ListView.builder(
+                    // Changed from GridView to ListView
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.8,
-                    ),
                     itemCount: documents.length,
                     itemBuilder: (context, index) {
                       final documentId = documents[index].id;
                       Map<String, dynamic> data =
                           documents[index].data() as Map<String, dynamic>;
                       String nama = data['Name'];
-                      String harga = data['Price'];
-                      String gambar = data['Image'];
+                      String harga = data['Price']; // Add harga name field
 
                       return GestureDetector(
                         onTap: () {
@@ -138,29 +180,81 @@ class _AdminDashboardState extends State<AdminDashboard> {
                             ),
                           );
                         },
-                        child: Card(
-                          color: Colors.grey[300],
-                          child: Container(
-                            margin: const EdgeInsets.only(left: 10, right: 10),
-                            child: Column(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          decoration: BoxDecoration(
+                            color: index % 2 == 0
+                                ? Color(0xFFFEF3F3)
+                                : Color(0xFFF3F8FE),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Row(
                               children: [
-                                Image.network(
-                                  gambar,
-                                  height: 100,
-                                  fit: BoxFit.cover,
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text(
-                                    nama,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                Expanded(
+                                  flex: 3,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        nama,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        formatPrice(harga),
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      DetailPaket(
+                                                          paketId:
+                                                              documentId)));
+                                        },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.black,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 20,
+                                            vertical: 8,
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Lihat Detail',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Text("IDR. $harga"),
+                                Expanded(
+                                  flex: 2,
+                                  child: Container(
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      image: DecorationImage(
+                                        image: NetworkImage(data['Image']),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),

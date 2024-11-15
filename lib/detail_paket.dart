@@ -5,6 +5,7 @@ import 'package:reservastion/checkout_page.dart';
 import 'package:reservastion/form_edit_packet.dart';
 import 'package:reservastion/paket.dart';
 import 'package:reservastion/screen/admin_dashboard.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class DetailPaket extends StatefulWidget {
   final String paketId;
@@ -20,11 +21,14 @@ class _DetailPaketState extends State<DetailPaket> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DocumentSnapshot? _paketSnapshot;
   User? user = FirebaseAuth.instance.currentUser;
+  DateTime _focusedDay = DateTime.now();
+  Set<DateTime> _bookedDates = {};
 
   @override
   void initState() {
     super.initState();
     _getPaketData();
+    _getOrderDate();
   }
 
   Future<void> _getPaketData() async {
@@ -37,6 +41,34 @@ class _DetailPaketState extends State<DetailPaket> {
       });
     } else {
       // Tangani jika dokumen tidak ditemukan
+    }
+  }
+
+  Future<void> _getOrderDate() async {
+    try {
+      final orderDocs = await _firestore.collection('order').get();
+
+      setState(() {
+        _bookedDates = orderDocs.docs
+            .map((doc) {
+              final dateString = doc.data()['Date'] as String;
+              final dateTime = DateTime.parse(dateString).toUtc();
+              final status = doc.data()['Status'] as String; // Ambil status
+
+              // Hanya tambahkan tanggal ke _bookedDates jika status adalah 'PENDING' atau 'ACCEPT'
+              if (status == 'PENDING' || status == 'ACCEPT') {
+                return DateTime(dateTime.year, dateTime.month, dateTime.day);
+              } else {
+                return null; // Kembalikan null jika statusnya 'FINISHED' atau 'DENIED'
+              }
+            })
+            .where((date) => date != null) // Hapus null
+            .cast<DateTime>()
+            .toSet();
+      });
+      debugPrint('Booked dates: $_bookedDates');
+    } catch (e) {
+      debugPrint('Error fetching order dates: $e');
     }
   }
 
@@ -123,7 +155,6 @@ class _DetailPaketState extends State<DetailPaket> {
         appBar: AppBar(
           title: const Text('TANTI MAKEUP STUDIO'),
           backgroundColor: Colors.grey[300],
-          elevation: 0.5,
         ),
         body: const Center(
           child: CircularProgressIndicator(),
@@ -193,8 +224,6 @@ class _DetailPaketState extends State<DetailPaket> {
                 const Text("deskripsi:"),
                 Text(deskripsi),
                 const SizedBox(height: 16.0),
-                const SizedBox(height: 8.0),
-                const SizedBox(height: 16.0),
                 FutureBuilder<String>(
                   future: checkRoleUser(),
                   builder:
@@ -207,35 +236,79 @@ class _DetailPaketState extends State<DetailPaket> {
                       final role = snapshot.data!;
                       return role == 'user'
                           ? Center(
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  final idpaket = _paketSnapshot!.id;
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) {
-                                        return CheckoutPage(
-                                          idPaket: idpaket,
-                                          price: double.parse(
-                                              harga.replaceAll(',', '')),
-                                        );
-                                      },
-                                    ),
-                                  );
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  minimumSize: const Size(288, 51),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8.0),
+                              child: Column(
+                                children: [
+                                  const Text("Tersedia Pada Tanggal:",
+                                      style: TextStyle(fontSize: 20)),
+                                  Column(
+                                    children: [
+                                      TableCalendar(
+                                        firstDay: DateTime.utc(2010, 10, 16),
+                                        lastDay: DateTime.utc(2030, 3, 14),
+                                        focusedDay: _focusedDay,
+                                        calendarFormat: CalendarFormat.month,
+                                        calendarStyle: CalendarStyle(
+                                          selectedTextStyle:
+                                              TextStyle(color: Colors.white),
+                                          disabledTextStyle:
+                                              TextStyle(color: Colors.grey),
+                                          disabledDecoration: BoxDecoration(
+                                            color: Colors.grey.withOpacity(0.3),
+                                            shape: BoxShape.rectangle,
+                                            borderRadius:
+                                                BorderRadius.circular(5.0),
+                                          ),
+                                        ),
+                                        headerStyle: HeaderStyle(
+                                          formatButtonVisible: false,
+                                          titleCentered: true,
+                                        ),
+                                        enabledDayPredicate: (day) {
+                                          return !_bookedDates.contains(
+                                              DateTime(day.year, day.month,
+                                                  day.day));
+                                        },
+                                      ),
+                                      const Text(
+                                          "*Tanggal yang ditandai abu-abu tidak tersedia"),
+                                    ],
                                   ),
-                                ),
-                                child: const Text('PILIH'),
+                                  SizedBox(height: 30),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      final idpaket = _paketSnapshot!.id;
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) {
+                                            return CheckoutPage(
+                                              idPaket: idpaket,
+                                              price: double.parse(
+                                                  harga.replaceAll(',', '')),
+                                            );
+                                          },
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      minimumSize: const Size(288, 51),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                    ),
+                                    child: const Text('PILIH'),
+                                  ),
+                                ],
                               ),
                             )
                           : Column(
                               children: [
+                                const SizedBox(
+                                  height: 18,
+                                ),
                                 Center(
                                   child: ElevatedButton(
                                     onPressed: () {
@@ -257,17 +330,17 @@ class _DetailPaketState extends State<DetailPaket> {
                                             BorderRadius.circular(8.0),
                                       ),
                                     ),
-                                    child: const Text('UPDATE'),
+                                    child: const Text('EDIT'),
                                   ),
                                 ),
                                 const SizedBox(
-                                  height: 20,
+                                  height: 6,
                                 ),
                                 Center(
                                   child: ElevatedButton(
                                     onPressed: _showDeleteConfirmationDialog,
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
+                                      backgroundColor: Colors.redAccent,
                                       foregroundColor: Colors.white,
                                       minimumSize: const Size(288, 51),
                                       shape: RoundedRectangleBorder(
@@ -275,7 +348,7 @@ class _DetailPaketState extends State<DetailPaket> {
                                             BorderRadius.circular(8.0),
                                       ),
                                     ),
-                                    child: const Text('DELETE'),
+                                    child: const Text('HAPUS'),
                                   ),
                                 )
                               ],

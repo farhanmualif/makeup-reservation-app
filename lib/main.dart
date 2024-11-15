@@ -3,18 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:reservastion/ThankyouPage.dart';
 import 'package:reservastion/order_history.dart';
 import 'package:reservastion/order_in.dart';
+import 'package:reservastion/pending_screen.dart';
 import 'package:reservastion/root_page.dart';
 import 'package:reservastion/screen/admin_dashboard.dart';
 import 'signup.dart';
 import 'login.dart';
 import 'home.dart';
 import 'paket.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
+  await dotenv.load(fileName: ".env");
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyAl2ydGodfysTnS36ZJrsb3-OcDHJWpAwU",
+    options: FirebaseOptions(
+      apiKey: dotenv.env['FIREBASE_API_KEY'] ?? "",
       appId: 'com.example.reservastion',
       messagingSenderId: '429999301527',
       projectId: 'reservation-47629',
@@ -46,5 +49,6 @@ class MyApp extends StatelessWidget {
         '/order-in': (context) => const OrderIn(),
       },
     );
-  }
+  } 
 }
+ 

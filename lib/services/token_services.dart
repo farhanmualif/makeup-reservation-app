@@ -15,7 +15,7 @@ class TokenServices {
     try {
       var response = await http.post(
           Uri.parse(
-            "http://192.168.145.154:3000/api",
+            "https://nextjs-midtrans-api-example-o2x4fdoph-farhan-mualifs-projects.vercel.app/api",
           ),
           headers: <String, String>{
             "Content-Type": "application/json",

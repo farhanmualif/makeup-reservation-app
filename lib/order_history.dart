@@ -87,6 +87,25 @@ class _OrderHistoryState extends State<OrderHistory> {
                                       Text('ID Pemesanan : $idPemesanan'),
                                       const SizedBox(height: 8.0),
                                       Text(
+                                          'Status : ${data['PaymentStatus'] ?? ''}'),
+                                      const SizedBox(height: 8.0),
+                                      // Tambahkan informasi status pembayaran
+                                      Text(
+                                          'Status Pembayaran : ${data['Status'] ?? 'PENDING'}'),
+                                      const SizedBox(height: 8.0),
+                                      // Tambahkan informasi harga yang dibayarkan
+                                      Text(
+                                          'Jumlah Dibayar : Rp ${(data['PaidAmount'] ?? 0).toString()}'),
+                                      const SizedBox(height: 8.0),
+                                      // Tambahkan informasi total harga
+                                      Text(
+                                          'Total Harga : Rp ${(data['TotalPrice'] ?? 0).toString()}'),
+                                      const SizedBox(height: 8.0),
+                                      // Tambahkan informasi status lunas
+                                      Text(
+                                          'Status Lunas : ${data['PaidOff'] == true ? 'Lunas' : 'Belum Lunas'}'),
+                                      const SizedBox(height: 8.0),
+                                      Text(
                                           'Nama Lengkap Pemesan : ${dataUser['fullname'] ?? ''}'),
                                       const SizedBox(height: 8.0),
                                       Text(

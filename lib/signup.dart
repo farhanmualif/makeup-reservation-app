@@ -7,67 +7,21 @@ class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _SignUpPageState createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
   final _formKey = GlobalKey<FormState>();
+  final _auth = FirebaseAuth.instance;
   final _usernameController = TextEditingController();
   final _fullnameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
-  final _auth = FirebaseAuth.instance;
+  bool _isLoading = false;
 
   var rool = "user";
-
-  void signUp(String email, String password, String rool, String fullname,
-      String phone) async {
-    const CircularProgressIndicator();
-    if (_formKey.currentState!.validate()) {
-      try {
-        UserCredential userCredential = await _auth
-            .createUserWithEmailAndPassword(email: email, password: password);
-        User? user = userCredential.user;
-        // Menyimpan nama pengguna
-        await user?.updateDisplayName(_usernameController.text);
-
-        postDetailsToFirestore(email, rool, fullname, phone);
-
-        Navigator.pushReplacement(
-          // ignore: use_build_context_synchronously
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Registration successful')),
-        );
-      } on FirebaseAuthException catch (e) {
-        if (e.code == 'weak-password') {
-          debugPrint('The password provided is too weak.');
-        } else if (e.code == 'email-already-in-use') {
-          debugPrint('The account already exists for that email.');
-        }
-      }
-    }
-  }
-
-  postDetailsToFirestore(
-      String email, String rool, String fullname, String phone) async {
-    var user = _auth.currentUser;
-    CollectionReference ref = FirebaseFirestore.instance.collection('users');
-    ref.doc(user!.uid).set({
-      'email': _emailController.text,
-      'rool': rool,
-      'fullname': fullname,
-      'phone': phone,
-    });
-    Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => const LoginScreen()));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,235 +29,211 @@ class _SignUpPageState extends State<SignUpPage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true, // Add this line
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.grey[300],
-      body: SingleChildScrollView(
-        // Wrap the form with SingleChildScrollView
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: screenWidth * 0.05,
-            vertical: screenHeight * 0.05,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.lock,
-                size: screenWidth * 0.15,
-                color: Colors.grey[600],
-              ),
-              SizedBox(height: screenHeight * 0.02),
-              Text(
-                'Let\'s create an account for you',
-                style: TextStyle(fontSize: screenWidth * 0.05),
-              ),
-              SizedBox(height: screenHeight * 0.03),
-              Form(
-                // Move the Form inside the SingleChildScrollView
-                key: _formKey,
+      body: _isLoading
+          ? Center(
+              child: CircularProgressIndicator(
+              color: Colors.black,
+            ))
+          : SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: screenWidth * 0.05,
+                  vertical: screenHeight * 0.05,
+                ),
                 child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    TextFormField(
-                      controller: _usernameController,
-                      decoration: InputDecoration(
-                        hintText: 'Username',
-                        hintStyle: TextStyle(color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[600]!),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter your username';
-                        }
-                        return null;
-                      },
-                    ),
+                    _buildIcon(screenWidth),
                     SizedBox(height: screenHeight * 0.02),
-                    TextFormField(
-                      controller: _fullnameController,
-                      decoration: InputDecoration(
-                        hintText: 'Full Name',
-                        hintStyle: TextStyle(color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[600]!),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter your Fullname';
-                        }
-                        return null;
-                      },
-                    ),
+                    _buildTitle(screenWidth),
+                    SizedBox(height: screenHeight * 0.03),
+                    _buildForm(screenWidth, screenHeight),
+                    SizedBox(height: screenHeight * 0.03),
+                    _buildSignUpButton(screenWidth, screenHeight),
                     SizedBox(height: screenHeight * 0.02),
-                    TextFormField(
-                      controller: _phoneController,
-                      decoration: InputDecoration(
-                        hintText: 'Number Phone',
-                        hintStyle: TextStyle(color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[600]!),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter your Phone';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        hintText: 'Email',
-                        hintStyle: TextStyle(color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[600]!),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter your phone or email';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Password',
-                        hintStyle: TextStyle(color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[600]!),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please enter a password';
-                        }
-                        return null;
-                      },
-                    ),
-                    SizedBox(height: screenHeight * 0.02),
-                    TextFormField(
-                      controller: _confirmPasswordController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: 'Confirm password',
-                        hintStyle: TextStyle(color: Colors.grey[600]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[400]!),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(color: Colors.grey[600]!),
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value!.isEmpty) {
-                          return 'Please confirm your password';
-                        }
-                        if (value != _passwordController.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
-                    ),
+                    _buildLoginLink(screenWidth),
                   ],
                 ),
               ),
-              SizedBox(height: screenHeight * 0.03),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      // Perform sign up logic here
-                      signUp(
-                          _emailController.text,
-                          _passwordController.text,
-                          rool,
-                          _fullnameController.text,
-                          _phoneController.text);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    padding:
-                        EdgeInsets.symmetric(vertical: screenHeight * 0.02),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: Text(
-                    'Sign Up',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: screenWidth * 0.045,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(height: screenHeight * 0.02),
-              TextButton(
-                onPressed: () {
-                  // Navigasi ke halaman Login
-                  Navigator.pushNamed(context, '/login');
-                },
-                child: Text(
-                  'Already an account? Login',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontSize: screenWidth * 0.04,
-                  ),
-                ),
-              ),
-            ],
+            ),
+    );
+  }
+
+  Widget _buildIcon(double screenWidth) {
+    return Icon(
+      Icons.lock,
+      size: screenWidth * 0.15,
+      color: Colors.grey[600],
+    );
+  }
+
+  Widget _buildTitle(double screenWidth) {
+    return Text(
+      'Let\'s create an account for you',
+      style: TextStyle(fontSize: screenWidth * 0.05),
+    );
+  }
+
+  Widget _buildForm(double screenWidth, double screenHeight) {
+    return Form(
+      key: _formKey,
+      child: Column(
+        children: [
+          _buildTextFormField(_usernameController, 'Username', screenHeight),
+          _buildTextFormField(_fullnameController, 'Full Name', screenHeight),
+          _buildTextFormField(_phoneController, 'Number Phone', screenHeight),
+          _buildTextFormField(_emailController, 'Email', screenHeight),
+          _buildTextFormField(_passwordController, 'Password', screenHeight,
+              isPassword: true),
+          _buildTextFormField(
+              _confirmPasswordController, 'Confirm password', screenHeight,
+              isPassword: true),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextFormField(
+      TextEditingController controller, String hintText, double screenHeight,
+      {bool isPassword = false}) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: screenHeight * 0.02),
+      child: TextFormField(
+        controller: controller,
+        obscureText: isPassword,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: TextStyle(color: Colors.grey[600]),
+          filled: true,
+          fillColor: Colors.white,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: Colors.grey[400]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide: BorderSide(color: Colors.grey[600]!),
+          ),
+        ),
+        validator: (value) => _validateField(value, hintText, isPassword),
+      ),
+    );
+  }
+
+  String? _validateField(String? value, String fieldName, bool isPassword) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your $fieldName';
+    }
+    if (isPassword &&
+        fieldName == 'Confirm password' &&
+        value != _passwordController.text) {
+      return 'Passwords do not match';
+    }
+    return null;
+  }
+
+  Widget _buildSignUpButton(double screenWidth, double screenHeight) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _handleSignUp,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.black,
+          padding: EdgeInsets.symmetric(vertical: screenHeight * 0.02),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+        ),
+        child: Text(
+          'Sign Up',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: screenWidth * 0.045,
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLoginLink(double screenWidth) {
+    return TextButton(
+      onPressed: () => Navigator.pushNamed(context, '/login'),
+      child: Text(
+        'Already an account? Login',
+        style: TextStyle(
+          color: Colors.blue,
+          fontSize: screenWidth * 0.04,
+        ),
+      ),
+    );
+  }
+
+  void _handleSignUp() {
+    if (_formKey.currentState!.validate()) {
+      signUp(
+        _emailController.text,
+        _passwordController.text,
+        rool,
+        _fullnameController.text,
+        _phoneController.text,
+      );
+    }
+  }
+
+  void signUp(String email, String password, String rool, String fullname,
+      String phone) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+      User? user = userCredential.user;
+      if (user != null) {
+        CollectionReference users =
+            FirebaseFirestore.instance.collection('users');
+
+        await users.doc(user.uid).set({
+          'email': email,
+          'rool': 'user',
+          'fullname': fullname,
+          'phone': phone,
+          'uid': user.uid,
+        });
+        await user.updateDisplayName(_usernameController.text);
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+        );
+        _showSnackBar('Registration successful');
+      } else {
+        _showSnackBar('Registration failed: User is null');
+      }
+    } on FirebaseAuthException catch (e) {
+      _handleFirebaseAuthException(e);
+    } catch (e) {
+      _showSnackBar('An unexpected error occurred: ${e.toString()}');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _handleFirebaseAuthException(FirebaseAuthException e) {
+    if (e.code == 'weak-password') {
+      _showSnackBar('The password provided is too weak');
+    } else if (e.code == 'email-already-in-use') {
+      _showSnackBar('The account already exists for that email');
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 }

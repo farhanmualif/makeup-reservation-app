@@ -10,7 +10,6 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final _nomorHpController = TextEditingController();
 
   Future<Map<String, dynamic>> getProfile() async {
     try {
