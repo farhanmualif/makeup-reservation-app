@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:reservastion/screen/forgot_password.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
+  bool _isPasswordVisible = false;
 
   // Error messages
   static const String _emptyEmailError = 'Email tidak boleh kosong';
@@ -90,6 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     final userExists = await _checkUserExists(email);
+    print('User exists: $userExists');
 
     if (!userExists) {
       _showSnackBar('Akun dengan email ini tidak ditemukan');
@@ -164,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Icon(Icons.lock, size: 80, color: Colors.grey),
                     const SizedBox(height: 20),
                     const Text(
-                      'Welcome back you\'ve been missed!',
+                      'Selamat Datang di Tanti Makeup!',
                       style: TextStyle(fontSize: 18),
                     ),
                     const SizedBox(height: 40),
@@ -174,7 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         validator: _validateEmail,
                         controller: _emailController,
                         decoration: InputDecoration(
-                          hintText: 'Phone or Email',
+                          hintText: 'Email',
                           hintStyle: TextStyle(color: Colors.grey[600]),
                           filled: true,
                           fillColor: Colors.white,
@@ -195,12 +198,25 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextFormField(
                         validator: _validatePassword,
                         controller: _passwordController,
-                        obscureText: true,
+                        obscureText: !_isPasswordVisible,
                         decoration: InputDecoration(
                           hintText: 'Password',
                           hintStyle: TextStyle(color: Colors.grey[600]),
                           filled: true,
                           fillColor: Colors.white,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.grey[600],
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(color: Colors.grey[400]!),
@@ -208,6 +224,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8.0),
                             borderSide: BorderSide(color: Colors.grey[600]!),
+                          ),
+                          errorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: const BorderSide(color: Colors.red),
+                          ),
+                          focusedErrorBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            borderSide: const BorderSide(color: Colors.red),
                           ),
                         ),
                       ),
@@ -219,10 +243,16 @@ class _LoginScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.only(right: 20),
                         child: TextButton(
                           onPressed: () {
-                            // Implement forgot password functionality
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
+                              ),
+                            );
                           },
                           child: const Text(
-                            'Forgot password?',
+                            'Lupa password?',
                             style: TextStyle(color: Colors.blue),
                           ),
                         ),
@@ -259,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Navigator.pushNamed(context, '/sign-up');
                       },
                       child: const Text(
-                        'Don\'t have an account? Sign up',
+                        'Tidak Memiliki akun? Buat Akun',
                         style: TextStyle(color: Colors.blue),
                       ),
                     ),
@@ -268,5 +298,12 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

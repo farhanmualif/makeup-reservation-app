@@ -1,15 +1,16 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:reservastion/ThankyouPage.dart';
-import 'package:reservastion/order_history.dart';
-import 'package:reservastion/order_in.dart';
-import 'package:reservastion/pending_screen.dart';
-import 'package:reservastion/root_page.dart';
+import 'package:reservastion/screen/ThankyouPage.dart';
+import 'package:reservastion/screen/date_management.dart';
+import 'package:reservastion/screen/forgot_password.dart';
+import 'package:reservastion/screen/order_history.dart';
+import 'package:reservastion/screen/order_in.dart';
+import 'package:reservastion/screen/root_page.dart';
 import 'package:reservastion/screen/admin_dashboard.dart';
-import 'signup.dart';
-import 'login.dart';
-import 'home.dart';
-import 'paket.dart';
+import 'screen/signup.dart';
+import 'screen/login.dart';
+import 'screen/home.dart';
+import 'screen/paket.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
@@ -34,6 +35,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Auth App',
       initialRoute: '/', // Halaman awal adalah halaman Login
       routes: {
@@ -47,8 +49,9 @@ class MyApp extends StatelessWidget {
         '/success': (context) => const ThankYouPage(),
         '/order-history': (context) => OrderHistory(),
         '/order-in': (context) => const OrderIn(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/date-management': (context) => const DateManagement(),
       },
     );
-  } 
+  }
 }
- 

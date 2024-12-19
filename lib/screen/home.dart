@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:reservastion/order_history.dart';
-import 'package:reservastion/profil.dart';
+import 'package:reservastion/screen/order_history.dart';
+import 'package:reservastion/screen/profil.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -66,7 +66,7 @@ class HomePage extends StatelessWidget {
               ),
             ),
             Image.asset(
-              'assets/images/mua.png',
+              'assets/images/logotm.png',
               fit: BoxFit.cover,
               width: double.infinity,
               height: 300.0,
@@ -121,7 +121,6 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
-      
     );
   }
 

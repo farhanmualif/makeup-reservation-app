@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:reservastion/detail_paket.dart';
-import 'package:reservastion/form_add_packet.dart';
+import 'package:reservastion/screen/detail_paket.dart';
+import 'package:reservastion/screen/form_add_packet.dart';
 import 'package:reservastion/utils/utils.dart';
 
 class AdminDashboard extends StatefulWidget {
@@ -107,11 +107,17 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ],
             ),
             ListTile(
+              title: const Text('Kelola Tanggal'),
+              onTap: () {
+                Navigator.pushNamed(context, '/date-management');
+              },
+            ),
+            ListTile(
               title: const Text('Logout'),
               onTap: () {
                 _logout(context);
               },
-            ),
+            )
           ],
         ),
       ),

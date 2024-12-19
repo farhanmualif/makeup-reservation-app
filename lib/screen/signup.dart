@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:reservastion/login.dart';
+import 'package:reservastion/screen/login.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
