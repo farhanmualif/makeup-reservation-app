@@ -59,32 +59,33 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   void _initSDK() async {
-    await midtransService.initSDK(); // Initialize MidtransService
+    await midtransService.initSDK();
     midtransService.setTransactionFinishedCallback((result) async {
       debugPrint("Transaction Result: ${result.toJson()}");
       try {
-        // Handle cancelled transaction
         if (result.isTransactionCanceled) {
           _showToast("Transaksi dibatalkan", false);
           Navigator.of(context).pop();
           return;
         }
 
-        // Check payment status using the order ID
-        final paymentStatusResponse =
-            await midtransService.checkPaymentStatus(orderId!);
+        final paymentStatusResponse = await midtransService.checkPaymentStatus(orderId!);
+        if (paymentStatusResponse == null) {
+          _showToast("Gagal memeriksa status pembayaran", true);
+          Navigator.of(context).pop();
+          return;
+        }
 
-        await _saveOrder(
-            result.transactionId!, paymentStatusResponse?['status']);
+        final transactionData = paymentStatusResponse['data'];
+        final transactionStatus = transactionData['transaction_status'];
 
-        if (paymentStatusResponse != null &&
-            paymentStatusResponse['status'] == 'success') {
-          final transactionData = paymentStatusResponse['data'];
-          final transactionStatus = transactionData['transaction_status'];
+        // Save order to Firebase with current transaction status
+        await _saveOrder(result.transactionId!, transactionStatus);
 
-          // Handle different transaction statuses
-          if (transactionStatus == 'settlement' ||
-              transactionStatus == 'capture') {
+        // Handle different transaction statuses
+        switch (transactionStatus) {
+          case 'settlement':
+          case 'capture':
             _showToast("Pembayaran berhasil", false);
             if (mounted) {
               Navigator.pushReplacement(
@@ -94,10 +95,13 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               );
             }
-          } else if (transactionStatus == 'pending') {
+            break;
+          
+          case 'pending':
             _showToast("Pembayaran sedang diproses", false);
             if (mounted) {
-              Navigator.of(context).pushReplacement(
+              Navigator.pushReplacement(
+                context,
                 MaterialPageRoute(
                   builder: (context) => PendingScreen(
                     orderId: orderId!,
@@ -107,15 +111,11 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 ),
               );
             }
-          } else {
-            _showToast(
-                "Status pembayaran: ${transactionData['status_message']}",
-                true);
+            break;
+          
+          default:
+            _showToast("Status pembayaran: ${transactionData['status_message']}", true);
             Navigator.of(context).pop();
-          }
-        } else {
-          _showToast("Gagal memeriksa status pembayaran", true);
-          Navigator.of(context).pop();
         }
       } catch (e) {
         debugPrint("Error in transaction callback: $e");
@@ -354,7 +354,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                       _buildPaymentOption(),
                       const SizedBox(height: 24),
                       const Text(
-                        'Alamat Makeup',
+                        'Alamat Pemesan',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,

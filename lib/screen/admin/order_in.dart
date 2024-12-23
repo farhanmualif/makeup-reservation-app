@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:reservastion/screen/detail_order.dart';
+import 'package:reservastion/screen/admin/detail_order.dart';
 import 'package:reservastion/model/packet_model.dart';
 import 'package:reservastion/model/user_model.dart';
 import 'package:reservastion/model/order_model.dart';
@@ -90,7 +90,26 @@ class _OrderInState extends State<OrderIn> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            // Sort orders: PENDING first, then by CreatedAt
             final pemesanan = snapshot.data!.docs;
+            pemesanan.sort((a, b) {
+              final aData = a.data() as Map<String, dynamic>;
+              final bData = b.data() as Map<String, dynamic>;
+              
+              final aStatus = aData['Status'] as String;
+              final bStatus = bData['Status'] as String;
+              
+              // If one is PENDING and the other isn't, PENDING comes first
+              if (aStatus == 'PENDING' && bStatus != 'PENDING') return -1;
+              if (bStatus == 'PENDING' && aStatus != 'PENDING') return 1;
+              
+              // If both have same status, sort by CreatedAt
+              final aTime = aData['CreatedAt'] as Timestamp?;
+              final bTime = bData['CreatedAt'] as Timestamp?;
+              if (aTime == null || bTime == null) return 0;
+              return bTime.compareTo(aTime); // Descending order (newest first)
+            });
+
             final pendingOrders = pemesanan.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
               return data['Status']?.toString().toUpperCase() == 'PENDING';

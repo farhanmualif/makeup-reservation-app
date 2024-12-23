@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:reservastion/screen/admin_dashboard.dart';
+import 'package:reservastion/screen/admin/admin_dashboard.dart';
 import 'login.dart';
 import 'home.dart';
 

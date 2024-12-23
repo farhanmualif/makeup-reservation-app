@@ -29,25 +29,31 @@ class _LoginScreenState extends State<LoginScreen> {
   static const Duration _snackBarDuration = Duration(seconds: 5);
 
   // Route navigation based on user role
-  void _navigateToScreen() {
+  Future<void> _navigateToScreen() async {
+    if (!mounted) return;
+    
     User? user = FirebaseAuth.instance.currentUser;
-    FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .get()
-        .then((DocumentSnapshot documentSnapshot) {
-      if (mounted) {
-        if (documentSnapshot.exists) {
-          if (documentSnapshot.get('rool') == "user") {
-            Navigator.pushReplacementNamed(context, "/home");
-          } else {
-            Navigator.pushReplacementNamed(context, "/admin-dashboard");
-          }
+    try {
+      DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+      
+      if (!mounted) return;
+
+      if (documentSnapshot.exists) {
+        String role = documentSnapshot.get('rool');
+        if (role == "user") {
+          Navigator.pushReplacementNamed(context, "/home");
         } else {
-          print('Document does not exist on the database');
+          Navigator.pushReplacementNamed(context, "/admin-dashboard");
         }
+      } else {
+        print('Document does not exist on the database');
       }
-    });
+    } catch (e) {
+      print('Error getting user role: $e');
+    }
   }
 
   Future<bool> _checkUserExists(String email) async {

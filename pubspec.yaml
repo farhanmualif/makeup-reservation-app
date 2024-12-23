@@ -40,7 +40,5 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - assets/images/mua.png
-    - assets/images/logo.png
     - assets/images/logotm.png
     - .env

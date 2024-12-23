@@ -90,7 +90,25 @@ class _OrderHistoryState extends State<OrderHistory> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            // Sort the documents by Status (PENDING first) and CreatedAt
             final pemesanan = snapshot.data!.docs;
+            pemesanan.sort((a, b) {
+              final aData = a.data() as Map<String, dynamic>;
+              final bData = b.data() as Map<String, dynamic>;
+              
+              final aStatus = aData['Status'] as String;
+              final bStatus = bData['Status'] as String;
+              
+              // If one is PENDING and the other isn't, PENDING comes first
+              if (aStatus == 'PENDING' && bStatus != 'PENDING') return -1;
+              if (bStatus == 'PENDING' && aStatus != 'PENDING') return 1;
+              
+              // If both have same status, sort by CreatedAt
+              final aTime = aData['CreatedAt'] as Timestamp?;
+              final bTime = bData['CreatedAt'] as Timestamp?;
+              if (aTime == null || bTime == null) return 0;
+              return bTime.compareTo(aTime); // Descending order (newest first)
+            });
 
             if (pemesanan.isEmpty) {
               return const Center(

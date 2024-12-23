@@ -2,9 +2,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:reservastion/screen/checkout_page.dart';
-import 'package:reservastion/screen/form_edit_packet.dart';
-import 'package:reservastion/screen/paket.dart';
-import 'package:reservastion/screen/admin_dashboard.dart';
+import 'package:reservastion/screen/admin/form_edit_packet.dart';
+import 'package:reservastion/screen/dashboard.dart';
+import 'package:reservastion/screen/admin/admin_dashboard.dart';
 import 'package:reservastion/utils/utils.dart';
 import 'package:table_calendar/table_calendar.dart';
 

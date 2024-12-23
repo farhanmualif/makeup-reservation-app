@@ -58,7 +58,7 @@ class _DetailOrderState extends State<DetailOrder> {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: (status == 'ACCEPT' || status == 'FINISHED')
+          backgroundColor: (status == 'ACCEPT' || status == 'FINISHED' || status == 'DENIED')
               ? Colors.green
               : Colors.red,
         ),

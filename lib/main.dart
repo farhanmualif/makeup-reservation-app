@@ -1,16 +1,16 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:reservastion/screen/ThankyouPage.dart';
-import 'package:reservastion/screen/date_management.dart';
+import 'package:reservastion/screen/admin/date_management.dart';
 import 'package:reservastion/screen/forgot_password.dart';
 import 'package:reservastion/screen/order_history.dart';
-import 'package:reservastion/screen/order_in.dart';
+import 'package:reservastion/screen/admin/order_in.dart';
 import 'package:reservastion/screen/root_page.dart';
-import 'package:reservastion/screen/admin_dashboard.dart';
+import 'package:reservastion/screen/admin/admin_dashboard.dart';
 import 'screen/signup.dart';
 import 'screen/login.dart';
 import 'screen/home.dart';
-import 'screen/paket.dart';
+import 'screen/dashboard.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {

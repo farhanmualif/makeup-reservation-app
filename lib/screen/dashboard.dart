@@ -160,7 +160,7 @@ class _PaketPageState extends State<PaketPage> {
                       controller: _searchController,
                       style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                        hintText: 'Cari paket makeup...',
+                        hintText: 'Cari paket makeup',
                         hintStyle: TextStyle(color: Colors.white70),
                         prefixIcon: Icon(Icons.search, color: Colors.white70),
                         border: InputBorder.none,
