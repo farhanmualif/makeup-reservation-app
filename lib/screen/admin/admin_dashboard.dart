@@ -145,7 +145,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
               ),
             ),
             StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('paket_makeup').snapshots(),
+              stream: _firestore
+                  .collection('paket_makeup')
+                  .where('isDeleted', isEqualTo: false) // filter soft delete
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Center(

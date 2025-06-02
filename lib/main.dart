@@ -35,6 +35,9 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(
+        primaryColor: Colors.black
+      ),
       debugShowCheckedModeBanner: false,
       title: 'Auth App',
       initialRoute: '/', // Halaman awal adalah halaman Login

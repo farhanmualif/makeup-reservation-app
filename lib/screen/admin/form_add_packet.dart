@@ -62,18 +62,23 @@ class _AddPaketFormState extends State<AddPaketForm> {
       final destination = 'files/$fileName';
 
       try {
-        final ref = firebase_storage.FirebaseStorage.instance
-            .ref(destination)
-            .child('file/');
-        var uploadTask = ref.putFile(_imageFile!);
+        final ref = firebase_storage.FirebaseStorage.instance.ref(destination);
+
+        var uploadTask = ref.putFile(
+          _imageFile!,
+          firebase_storage.SettableMetadata(),
+        );
         var downloadUrl = await (await uploadTask).ref.getDownloadURL();
+
         // Tambahkan data paket ke Cloud Firestore
-        await _firestore.collection('paket_makeup').add({
+        var insert = await _firestore.collection('paket_makeup').add({
           'Name': nama,
           'Price': harga,
           'Description': deskripsi,
           "Image": downloadUrl.toString()
         });
+
+        print("cek insert $insert");
 
         // Reset form setelah berhasil menambahkan paket
         _formKey.currentState!.reset();
@@ -112,6 +117,10 @@ class _AddPaketFormState extends State<AddPaketForm> {
             ),
           );
         }
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -232,7 +241,7 @@ class _AddPaketFormState extends State<AddPaketForm> {
                             BorderRadius.circular(8.0), // Bentuk tombol
                       ),
                     ),
-                    child: const Text('Tambah Paket'),
+                    child: _isLoading ? Center(child: CircularProgressIndicator(color: Colors.white,),) : const Text('Tambah Paket'),
                   ),
                 ),
               ],

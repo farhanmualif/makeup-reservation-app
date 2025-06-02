@@ -95,22 +95,24 @@ class _DetailPaketState extends State<DetailPaket> {
       await FirebaseFirestore.instance
           .collection('paket_makeup')
           .doc(widget.paketId)
-          .delete();
+          .update({
+        'isDeleted': true,
+        'deletedAt': FieldValue.serverTimestamp(), // optional
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Paket berhasil dihapus'),
+          content: Text('Paket berhasil dihapus (soft delete)'),
         ),
       );
 
-      Navigator.pushReplacement(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => const PaketPage(),
-        ),
+        '/admin-dashboard',
+        (Route<dynamic> route) => false,
       );
     } catch (e) {
-      print('Error deleting product: $e');
+      print('Error soft-deleting product: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Terjadi kesalahan saat menghapus paket'),
@@ -135,16 +137,21 @@ class _DetailPaketState extends State<DetailPaket> {
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Batal'),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: Colors.black),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Hapus'),
+              child: const Text(
+                'Hapus',
+                style: TextStyle(color: Colors.black),
+              ),
               onPressed: () {
                 _deleteProduct();
-                Navigator.pushReplacementNamed(context, '/paket');
               },
             ),
           ],
@@ -422,7 +429,10 @@ class _DetailPaketState extends State<DetailPaket> {
                                                 BorderRadius.circular(12),
                                           ),
                                         ),
-                                        child: const Text('Edit Paket'),
+                                        child: const Text(
+                                          'Edit Paket',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
                                       ),
                                     ),
                                     const SizedBox(width: 16),
@@ -439,7 +449,10 @@ class _DetailPaketState extends State<DetailPaket> {
                                                 BorderRadius.circular(12),
                                           ),
                                         ),
-                                        child: const Text('Hapus Paket'),
+                                        child: const Text(
+                                          'Hapus Paket',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
                                       ),
                                     ),
                                   ],

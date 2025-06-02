@@ -179,7 +179,10 @@ class _PaketPageState extends State<PaketPage> {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: StreamBuilder<QuerySnapshot>(
-                stream: _firestore.collection('paket_makeup').snapshots(),
+                stream: _firestore
+                    .collection('paket_makeup')
+                    .where('isDeleted', isEqualTo: false) // filter soft delete
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Center(

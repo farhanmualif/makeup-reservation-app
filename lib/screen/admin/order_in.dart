@@ -95,14 +95,14 @@ class _OrderInState extends State<OrderIn> {
             pemesanan.sort((a, b) {
               final aData = a.data() as Map<String, dynamic>;
               final bData = b.data() as Map<String, dynamic>;
-              
+
               final aStatus = aData['Status'] as String;
               final bStatus = bData['Status'] as String;
-              
+
               // If one is PENDING and the other isn't, PENDING comes first
               if (aStatus == 'PENDING' && bStatus != 'PENDING') return -1;
               if (bStatus == 'PENDING' && aStatus != 'PENDING') return 1;
-              
+
               // If both have same status, sort by CreatedAt
               final aTime = aData['CreatedAt'] as Timestamp?;
               final bTime = bData['CreatedAt'] as Timestamp?;
@@ -217,12 +217,27 @@ class _OrderInState extends State<OrderIn> {
                                         ClipRRect(
                                           borderRadius:
                                               BorderRadius.circular(10),
-                                          child: Image.network(
-                                            packetData.image,
-                                            width: 80,
-                                            height: 80,
-                                            fit: BoxFit.cover,
-                                          ),
+                                          child: (packetData.image != null &&
+                                                  packetData.image.isNotEmpty &&
+                                                  Uri.tryParse(packetData.image)
+                                                          ?.hasAbsolutePath ==
+                                                      true &&
+                                                  (packetData.image
+                                                          .startsWith('http') ||
+                                                      packetData.image
+                                                          .startsWith('https')))
+                                              ? Image.network(
+                                                  packetData.image,
+                                                  width: 80,
+                                                  height: 80,
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : Image.network(
+                                                  "https://www.shutterstock.com/image-vector/default-ui-image-placeholder-wireframes-600nw-1037719192.jpg",
+                                                  width: 80,
+                                                  height: 80,
+                                                  fit: BoxFit.cover,
+                                                ),
                                         ),
                                         const SizedBox(width: 16),
                                         Expanded(
@@ -282,10 +297,9 @@ class _OrderInState extends State<OrderIn> {
                                             '$formattedDate - ${order.time}'),
                                         _buildInfoRow(
                                           'Total',
-                                          formatPrice(
-                                              (order.totalPrice as double)
-                                                  .toInt()
-                                                  .toString()),
+                                          formatPrice((order.totalPrice)
+                                              .toInt()
+                                              .toString()),
                                           isLast: true,
                                         ),
                                       ],

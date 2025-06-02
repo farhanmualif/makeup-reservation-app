@@ -58,9 +58,10 @@ class _DetailOrderState extends State<DetailOrder> {
       scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text(message),
-          backgroundColor: (status == 'ACCEPT' || status == 'FINISHED' || status == 'DENIED')
-              ? Colors.green
-              : Colors.red,
+          backgroundColor:
+              (status == 'ACCEPT' || status == 'FINISHED' || status == 'DENIED')
+                  ? Colors.green
+                  : Colors.red,
         ),
       );
 
@@ -263,7 +264,7 @@ class _DetailOrderState extends State<DetailOrder> {
                                 _buildInfoRow('Waktu', orderData.time),
                                 _buildInfoRow(
                                     'Total Pembayaran',
-                                    formatPrice((orderData.totalPrice as double)
+                                    formatPrice((orderData.totalPrice)
                                         .toInt()
                                         .toString())),
                                 _buildInfoRow(

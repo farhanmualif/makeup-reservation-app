@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:reservastion/screen/order_history.dart';
 import 'package:reservastion/screen/profil.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final User? currentUser = FirebaseAuth.instance.currentUser;
+
+  Stream<int> getAcceptedOrdersCount() {
+    return FirebaseFirestore.instance
+        .collection('order')
+        .where('UserUid', isEqualTo: currentUser?.uid)
+        .where('Status', isEqualTo: 'ACCEPT')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.length);
+  }
+
+  void _logout(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,11 +57,38 @@ class HomePage extends StatelessWidget {
                         builder: (context) => const ProfilePage()));
               },
             ),
-            ListTile(
-              title: const Text('Histori Pemesanan'),
-              onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => OrderHistory()));
+            StreamBuilder<int>(
+              stream: getAcceptedOrdersCount(),
+              builder: (context, snapshot) {
+                final count = snapshot.data ?? 0;
+                return ListTile(
+                  title: Row(
+                    children: [
+                      const Text('Histori Pemesanan'),
+                      if (count > 0)
+                        Container(
+                          margin: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            count.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) => OrderHistory()));
+                  },
+                );
               },
             ),
             ListTile(
@@ -122,17 +171,5 @@ class HomePage extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  // Fungsi untuk logout
-  Future<void> _logout(BuildContext context) async {
-    try {
-      await FirebaseAuth.instance.signOut();
-      // Navigasi ke halaman login setelah logout berhasil
-      Navigator.pushReplacementNamed(context, '/login');
-    } catch (e) {
-      // Tangani error logout jika ada
-      print('Logout error: $e');
-    }
   }
 }

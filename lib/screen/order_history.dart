@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:reservastion/screen/payment_page.dart';
 import 'package:reservastion/utils/utils.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -90,19 +91,23 @@ class _OrderHistoryState extends State<OrderHistory> {
               return const Center(child: CircularProgressIndicator());
             }
 
-            // Sort the documents by Status (PENDING first) and CreatedAt
+            // Sort the documents by Status (ACCEPT first) and CreatedAt
             final pemesanan = snapshot.data!.docs;
             pemesanan.sort((a, b) {
               final aData = a.data() as Map<String, dynamic>;
               final bData = b.data() as Map<String, dynamic>;
-              
+
               final aStatus = aData['Status'] as String;
               final bStatus = bData['Status'] as String;
-              
-              // If one is PENDING and the other isn't, PENDING comes first
-              if (aStatus == 'PENDING' && bStatus != 'PENDING') return -1;
-              if (bStatus == 'PENDING' && aStatus != 'PENDING') return 1;
-              
+
+              // If one is ACCEPT, it should come first
+              if (aStatus == 'ACCEPT' && bStatus != 'ACCEPT') return -1;
+              if (bStatus == 'ACCEPT' && aStatus != 'ACCEPT') return 1;
+
+              // If neither is ACCEPT, PENDING comes before REJECT
+              if (aStatus == 'PENDING' && bStatus == 'REJECT') return -1;
+              if (bStatus == 'PENDING' && aStatus == 'REJECT') return 1;
+
               // If both have same status, sort by CreatedAt
               final aTime = aData['CreatedAt'] as Timestamp?;
               final bTime = bData['CreatedAt'] as Timestamp?;
@@ -121,6 +126,9 @@ class _OrderHistoryState extends State<OrderHistory> {
                 ),
               );
             }
+
+            print(
+                "cek pemesanan: ${pemesanan.map((doc) => doc.data()).toList()}");
 
             return Column(
               children: [
@@ -215,12 +223,20 @@ class _OrderHistoryState extends State<OrderHistory> {
                                               ClipRRect(
                                                 borderRadius:
                                                     BorderRadius.circular(10),
-                                                child: Image.network(
-                                                  dataPacket['Image'],
-                                                  width: 80,
-                                                  height: 80,
-                                                  fit: BoxFit.cover,
-                                                ),
+                                                child:
+                                                    dataPacket['Image'] != null
+                                                        ? Image.network(
+                                                            dataPacket['Image'],
+                                                            width: 80,
+                                                            height: 80,
+                                                            fit: BoxFit.cover,
+                                                          )
+                                                        : Image.network(
+                                                            'https://www.shutterstock.com/image-vector/default-ui-image-placeholder-wireframes-600nw-1037719192.jpg',
+                                                            width: 80,
+                                                            height: 80,
+                                                            fit: BoxFit.cover,
+                                                          ),
                                               ),
                                               const SizedBox(width: 16),
                                               Expanded(
@@ -229,7 +245,8 @@ class _OrderHistoryState extends State<OrderHistory> {
                                                       CrossAxisAlignment.start,
                                                   children: [
                                                     Text(
-                                                      dataPacket['Name'],
+                                                      dataPacket['Name'] ??
+                                                          'Paket Silver',
                                                       style: const TextStyle(
                                                         fontSize: 18,
                                                         fontWeight:
@@ -288,6 +305,46 @@ class _OrderHistoryState extends State<OrderHistory> {
                                                     totalPrice.toString()),
                                                 isLast: true,
                                               ),
+                                              if (data['Status'] == 'ACCEPT' &&
+                                                  (data['PaymentStatus'] ==
+                                                          null ||
+                                                      data['PaymentStatus'] ==
+                                                          'pending' ||
+                                                      data['PaymentStatus'] ==
+                                                          '')) ...[
+                                                const SizedBox(height: 10),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            PaymentPage(
+                                                          orderId:
+                                                              pemesanan[index]
+                                                                  .id,
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  style:
+                                                      ElevatedButton.styleFrom(
+                                                    backgroundColor:
+                                                        Colors.grey[800],
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                    ),
+                                                  ),
+                                                  child: const Text(
+                                                    'Bayar Sekarang',
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
+                                              ],
                                             ],
                                           ),
                                         ),
